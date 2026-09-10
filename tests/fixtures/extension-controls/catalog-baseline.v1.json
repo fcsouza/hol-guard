@@ -7,7 +7,7 @@
     "canonical_diff_digest",
     "effective"
   ],
-  "catalog_digest": "9c0fe389b06d2c5f6f13ca6088faa1f911f610178bcd99deb79ccf043d0ae654",
+  "catalog_digest": "6b51e3d260a37adf8cd5d58b49cc3d0e6322b1e8597e33b2fffd3faa462b4359",
   "control_schema_version": "1.0.0",
   "daemon_api_schema": "guard.daemon.extension-controls.v1",
   "effective_shape": [
@@ -94,7 +94,7 @@
   "extension_schema_version": 2,
   "installed_browser_config": "dashboard/playwright.installed.config.ts",
   "overview_route": "/extensions",
-  "permission_count": 227,
+  "permission_count": 228,
   "permission_examples": {
     "command.api-gateway.permission.delete": "aws apigateway delete-rest-api",
     "command.backup.borg.permission.mutation": "borg delete",
@@ -292,7 +292,8 @@
     "command.storage.aws-s3.permission.bucket-configuration": "aws s3api put-bucket-versioning",
     "command.storage.aws-s3.permission.cp": "aws s3 cp",
     "command.storage.aws-s3.permission.deletion": "aws s3 rm",
-    "command.storage.aws-s3.permission.get": "aws s3api get-object",
+    "command.storage.aws-s3.permission.download": "aws s3api get-object",
+    "command.storage.aws-s3.permission.get": "aws s3api head-object",
     "command.storage.aws-s3.permission.ls": "aws s3 ls",
     "command.storage.aws-s3.permission.mb": "aws s3 mb",
     "command.storage.aws-s3.permission.mv": "aws s3 mv",
@@ -371,6 +372,7 @@
     "command.storage.aws-s3.permission.bucket-configuration": "aws-s3",
     "command.storage.aws-s3.permission.cp": "aws-s3",
     "command.storage.aws-s3.permission.deletion": "aws-s3",
+    "command.storage.aws-s3.permission.download": "aws-s3",
     "command.storage.aws-s3.permission.get": "aws-s3",
     "command.storage.aws-s3.permission.ls": "aws-s3",
     "command.storage.aws-s3.permission.mb": "aws-s3",
@@ -598,6 +600,7 @@
     "command.storage.aws-s3.permission.bucket-configuration",
     "command.storage.aws-s3.permission.cp",
     "command.storage.aws-s3.permission.deletion",
+    "command.storage.aws-s3.permission.download",
     "command.storage.aws-s3.permission.get",
     "command.storage.aws-s3.permission.ls",
     "command.storage.aws-s3.permission.mb",
@@ -640,7 +643,7 @@
     "controls",
     "semantic_preview"
   ],
-  "rule_count": 214,
+  "rule_count": 215,
   "rule_ids": [
     "command.api-gateway.delete",
     "command.backup.borg.mutation",
@@ -833,6 +836,7 @@
     "command.storage.aws-s3.access-control",
     "command.storage.aws-s3.bucket-configuration",
     "command.storage.aws-s3.object-tagging",
+    "command.storage.aws-s3.download",
     "command.storage.aws-s3.get",
     "command.storage.azure-blob.deletion",
     "command.storage.azure-blob.upload",

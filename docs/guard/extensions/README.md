@@ -70,7 +70,7 @@ Protection model meanings:
 | `command.database.redis` | Reviews Redis key deletion and database flush commands. | 1 | Built in |
 | `command.database.sqlite` | Reviews SQLite restore operations that replace database content. | 1 | Built in |
 | `command.database.supabase` | Reviews database reset and migration rollback commands. | 1 | Built in |
-| `command.storage.aws-s3` | Reviews AWS CLI high-level S3 commands and S3 API object, bucket, access-control, and configuration operations including copy, list, sync, website, and deletion. | 13 | Built in |
+| `command.storage.aws-s3` | Reviews AWS CLI high-level S3 commands and S3 API object, bucket, access-control, and configuration operations including copy, list, sync, website, and deletion. | 14 | Built in |
 | `command.storage.azure-blob` | Reviews Azure CLI storage commands including upload, list, copy, and deletion. | 6 | Built in |
 | `command.storage.google-cloud` | Reviews Google CLI storage commands including copy, list, sync, and deletion. | 7 | Built in |
 | `command.storage.minio` | Reviews MinIO Client commands including copy, list, mirror, and deletion. | 7 | Built in |
