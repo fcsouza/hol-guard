@@ -18,6 +18,11 @@ MANAGED_SERVICE_REVIEW_CASES: tuple[tuple[str, str, str], ...] = (
         "DNS destructive command",
         "command.dns.delete",
     ),
+    (
+        "aws route53 delete-health-check --health-check-id abc",
+        "DNS destructive command",
+        "command.dns.delete",
+    ),
     ("gcloud beta dns managed-zones delete public", "DNS destructive command", "command.dns.delete"),
     (
         "gcloud --filter active dns managed-zones delete public",
@@ -35,9 +40,19 @@ MANAGED_SERVICE_REVIEW_CASES: tuple[tuple[str, str, str], ...] = (
         "CDN destructive command",
         "command.cdn.delete",
     ),
+    (
+        "aws cloudfront delete-vpc-origin --id vo-123",
+        "CDN destructive command",
+        "command.cdn.delete",
+    ),
     ("az cdn endpoint delete -g app -n edge --profile-name main", "CDN destructive command", "command.cdn.delete"),
     (
         "aws apigateway delete-rest-api --rest-api-id api123",
+        "API gateway destructive command",
+        "command.api-gateway.delete",
+    ),
+    (
+        "aws apigatewayv2 delete-api --api-id api123",
         "API gateway destructive command",
         "command.api-gateway.delete",
     ),
@@ -49,6 +64,16 @@ MANAGED_SERVICE_REVIEW_CASES: tuple[tuple[str, str, str], ...] = (
     ("az apim delete -g app -n public-api --yes", "API gateway destructive command", "command.api-gateway.delete"),
     (
         "aws elbv2 delete-load-balancer --load-balancer-arn arn:value",
+        "Load balancer destructive command",
+        "command.load-balancer.delete",
+    ),
+    (
+        "aws elbv2 delete-target-group --target-group-arn arn:value",
+        "Load balancer destructive command",
+        "command.load-balancer.delete",
+    ),
+    (
+        "aws elb delete-load-balancer --load-balancer-name public-lb",
         "Load balancer destructive command",
         "command.load-balancer.delete",
     ),
@@ -68,6 +93,11 @@ MANAGED_SERVICE_REVIEW_CASES: tuple[tuple[str, str, str], ...] = (
         "command.monitoring.delete",
     ),
     (
+        "aws cloudwatch delete-dashboards --dashboard-names latency",
+        "Monitoring destructive command",
+        "command.monitoring.delete",
+    ),
+    (
         "gcloud beta monitoring policies delete policy123",
         "Monitoring destructive command",
         "command.monitoring.delete",
@@ -79,6 +109,11 @@ MANAGED_SERVICE_REVIEW_CASES: tuple[tuple[str, str, str], ...] = (
     ),
     (
         "aws sesv2 delete-email-identity --email-identity sender@example.test",
+        "Email destructive command",
+        "command.email.delete",
+    ),
+    (
+        "aws sesv2 delete-email-template --template-name welcome",
         "Email destructive command",
         "command.email.delete",
     ),
@@ -117,6 +152,10 @@ def test_managed_service_rules_feed_runtime_hooks(tmp_path: Path) -> None:
 
 MANAGED_SERVICE_SAFE_COMMANDS: tuple[str, ...] = (
     "aws route53 delete-hosted-zone --help",
+    "aws route53 delete-hosted-zone --generate-cli-skeleton input",
+    "aws elbv2 delete-load-balancer --generate-cli-skeleton output",
+    "aws cloudfront delete-function --generate-cli-skeleton yaml-input",
+    "aws apigateway delete-stage --generate-cli-skeleton=input",
     "gcloud dns managed-zones delete --help",
     "az cdn profile delete --help",
     "aws --future-global-option account route53 delete-hosted-zone --id Z123 --help",
