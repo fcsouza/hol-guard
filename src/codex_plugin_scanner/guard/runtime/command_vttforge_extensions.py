@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from .command_extension_matchers import executable_matcher
+from .command_extension_matchers import executable_matcher, executable_names
 from .command_extension_specs import CommandExtensionSpec
 from .command_matcher_contracts import MatcherEvidence
 from .command_model import CanonicalCommand
@@ -157,7 +157,7 @@ class VttforgeUnresolvedExpansionMatcher:
                 continue
             lowered_arguments = tuple(argument.lower() for argument in segment.arguments)
             for launcher in self.launchers:
-                if not _segment_matches_executable(segment, frozenset({launcher[0]})):
+                if not _segment_matches_executable(segment, executable_names(launcher[0])):
                     continue
                 candidate_arguments = lowered_arguments
                 if _is_wrapper(launcher):
