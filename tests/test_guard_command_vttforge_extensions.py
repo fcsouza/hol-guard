@@ -248,6 +248,30 @@ def test_expanded_subcommand_is_attributed_to_one_rule(tmp_path: Path) -> None:
         assert matched == [expected_rule], command
 
 
+def test_windows_launcher_names_are_matched_through_an_expansion(tmp_path: Path) -> None:
+    """The expansion path reads `.cmd` and `.exe` the same way the literal path does.
+
+    `executable_names` gives every matcher the three portable launcher names. The
+    expansion matcher built its own single-name set, so a Windows launcher whose
+    writing flag arrives from a shell expansion went unreviewed.
+    """
+
+    for command in (
+        "vttforge.cmd lint $FLAGS",
+        "vttforge.exe lint $FLAGS",
+        "vttforge.CMD lint $FLAGS",
+    ):
+        observations = BUILT_IN_COMMAND_EXTENSION_REGISTRY.observations(
+            parse_shell_command(command, cwd=tmp_path, home_dir=tmp_path)
+        )
+        matched = sorted(
+            item.rule.rule_id
+            for item in observations
+            if item.extension.extension_id == "command.vttforge" and item.effective_evidence
+        )
+        assert matched == ["command.vttforge.lint-fix"], command
+
+
 _REPO_ROOT = Path(__file__).resolve().parents[1]
 _CONTRIBUTION = "contributions/extensions/command.vttforge.json"
 _PACKAGED_CONTRIBUTION = "extensions/contributions/command.vttforge.json"
