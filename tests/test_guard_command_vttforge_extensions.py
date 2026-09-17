@@ -215,6 +215,8 @@ VTTFORGE_SAFE_COMMANDS: tuple[str, ...] = (
     "xargs vttforge audit ./my-system",
     "xargs -a targets vttforge audit",
     "exec -a vtt vttforge migrate --write --help",
+    "exec vttforge.cmd lint --fix --help",
+    "xargs vttforge.exe audit ./my-system",
 )
 
 
@@ -260,6 +262,8 @@ def test_windows_launcher_names_are_matched_through_an_expansion(tmp_path: Path)
         "vttforge.cmd lint $FLAGS",
         "vttforge.exe lint $FLAGS",
         "vttforge.CMD lint $FLAGS",
+        "exec vttforge.cmd lint $FLAGS",
+        "xargs -n 1 vttforge.EXE lint $FLAGS",
     ):
         observations = BUILT_IN_COMMAND_EXTENSION_REGISTRY.observations(
             parse_shell_command(command, cwd=tmp_path, home_dir=tmp_path)
@@ -270,6 +274,27 @@ def test_windows_launcher_names_are_matched_through_an_expansion(tmp_path: Path)
             if item.extension.extension_id == "command.vttforge" and item.effective_evidence
         )
         assert matched == ["command.vttforge.lint-fix"], command
+
+
+def test_windows_launcher_names_are_matched_through_a_wrapper(tmp_path: Path) -> None:
+    """A wrapper passes the launcher as an argument, so `.cmd` and `.exe` are matched there too."""
+
+    for command, expected_rule in (
+        ("exec vttforge.cmd init my-system", "command.vttforge.init"),
+        ("exec vttforge.CMD $ARGS", "command.vttforge.init"),
+        ("xargs vttforge.exe lint --fix", "command.vttforge.lint-fix"),
+        ("xargs vttforge.exe migrate --write", "command.vttforge.migrate-write"),
+        ("exec -a vtt vttforge.cmd $ARGS --write", "command.vttforge.migrate-write"),
+    ):
+        observations = BUILT_IN_COMMAND_EXTENSION_REGISTRY.observations(
+            parse_shell_command(command, cwd=tmp_path, home_dir=tmp_path)
+        )
+        matched = sorted(
+            item.rule.rule_id
+            for item in observations
+            if item.extension.extension_id == "command.vttforge" and item.effective_evidence
+        )
+        assert matched == [expected_rule], command
 
 
 _REPO_ROOT = Path(__file__).resolve().parents[1]

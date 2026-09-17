@@ -36,10 +36,12 @@ from .command_rules import (
 # package firewall owns launcher policy, while this matcher owns the installed
 # CLI.
 
+# A wrapper names the wrapped executable as an argument, so the `.cmd` and
+# `.exe` forms that `executable_names` gives the direct launcher are listed
+# here one by one.
 _VTTFORGE_LAUNCHERS: tuple[tuple[str, ...], ...] = (
     ("vttforge",),
-    ("exec", "vttforge"),
-    ("xargs", "vttforge"),
+    *((wrapper, name) for wrapper in ("exec", "xargs") for name in sorted(executable_names("vttforge"))),
 )
 # Wrapper options that consume the next token. Missing one here would let its
 # operand pass for the wrapped executable and hide the command; `exec -a name`
