@@ -131,6 +131,89 @@ VTTFORGE_REVIEW_CASES: tuple[tuple[str, str, str], ...] = (
         "VTTForge migration write command",
         "command.vttforge.migrate-write",
     ),
+    # Flag-only wrapper options must not hide the wrapped command.
+    (
+        "xargs -0 vttforge migrate --write",
+        "VTTForge migration write command",
+        "command.vttforge.migrate-write",
+    ),
+    (
+        "xargs --null -t vttforge lint --fix",
+        "VTTForge lint fix command",
+        "command.vttforge.lint-fix",
+    ),
+    (
+        "xargs -0rt vttforge lint --fix",
+        "VTTForge lint fix command",
+        "command.vttforge.lint-fix",
+    ),
+    (
+        "xargs --no-run-if-empty vttforge migrate --write",
+        "VTTForge migration write command",
+        "command.vttforge.migrate-write",
+    ),
+    (
+        "exec -c vttforge init my-system",
+        "VTTForge project scaffold command",
+        "command.vttforge.init",
+    ),
+    (
+        "xargs -0 vttforge lint $FLAGS",
+        "VTTForge lint fix command",
+        "command.vttforge.lint-fix",
+    ),
+    (
+        "xargs --verbose vttforge $ARGS --write",
+        "VTTForge migration write command",
+        "command.vttforge.migrate-write",
+    ),
+    # Matching is case-insensitive, so -r / -R and -p / -P read both ways.
+    (
+        "xargs -r vttforge lint --fix",
+        "VTTForge lint fix command",
+        "command.vttforge.lint-fix",
+    ),
+    (
+        "xargs -p vttforge init my-system",
+        "VTTForge project scaffold command",
+        "command.vttforge.init",
+    ),
+    (
+        "xargs -R 5 vttforge lint --fix",
+        "VTTForge lint fix command",
+        "command.vttforge.lint-fix",
+    ),
+    (
+        "xargs -P 4 vttforge migrate --write",
+        "VTTForge migration write command",
+        "command.vttforge.migrate-write",
+    ),
+    (
+        "xargs -I {} vttforge init {}",
+        "VTTForge project scaffold command",
+        "command.vttforge.init",
+    ),
+    (
+        "xargs -L 1 vttforge migrate $FLAGS",
+        "VTTForge migration write command",
+        "command.vttforge.migrate-write",
+    ),
+    (
+        "xargs -r vttforge.exe lint $FLAGS",
+        "VTTForge lint fix command",
+        "command.vttforge.lint-fix",
+    ),
+    # An option the matcher does not know may or may not take the next token.
+    (
+        "xargs --unknown-option vttforge init my-system",
+        "VTTForge project scaffold command",
+        "command.vttforge.init",
+    ),
+    (
+        "xargs --unknown-option value vttforge lint $FLAGS",
+        "VTTForge lint fix command",
+        "command.vttforge.lint-fix",
+    ),
     # An expanded subcommand next to a literal writing flag goes to that rule.
     (
         "vttforge $SUBCOMMAND --fix",
@@ -217,6 +300,13 @@ VTTFORGE_SAFE_COMMANDS: tuple[str, ...] = (
     "exec -a vtt vttforge migrate --write --help",
     "exec vttforge.cmd lint --fix --help",
     "xargs vttforge.exe audit ./my-system",
+    # Flag-only wrapper options leave the read-only forms read-only.
+    "xargs -0 vttforge lint",
+    "xargs -r vttforge migrate ./my-system",
+    "xargs -P 4 vttforge audit",
+    "xargs -r vttforge lint --fix --help",
+    # A value option's operand is not the wrapped command.
+    "xargs -a vttforge lint --fix",
 )
 
 

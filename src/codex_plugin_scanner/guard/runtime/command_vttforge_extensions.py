@@ -12,7 +12,6 @@ from .command_rules import (
     AnyMatcher,
     CommandSafetyRule,
     CommandSafeVariant,
-    _after_leading_options,
     _segment_matches_executable,
 )
 
@@ -43,9 +42,16 @@ _VTTFORGE_LAUNCHERS: tuple[tuple[str, ...], ...] = (
     ("vttforge",),
     *((wrapper, name) for wrapper in ("exec", "xargs") for name in sorted(executable_names("vttforge"))),
 )
-# Wrapper options that consume the next token. Missing one here would let its
-# operand pass for the wrapped executable and hide the command; `exec -a name`
-# and `xargs -a file` are the ones a shared set tends to forget.
+# Wrapper options, split by whether they consume the next token. Missing a
+# value-taking one would let its operand pass for the wrapped executable and
+# hide the command; `exec -a name` and `xargs -a file` are the ones a shared
+# set tends to forget.
+#
+# Matching lowercases every argument, and xargs gives the same letter two
+# meanings by case: `-r` and `-p` are flags while `-R` and `-P` take a value,
+# and `-e`, `-i`, `-l` only take an attached value while `-E`, `-I`, `-L` take
+# the next token. Those letters are left out of both sets, so the fail-secure
+# parser tries both readings instead of settling on the wrong one.
 _WRAPPER_LEADING_OPTIONS_WITH_VALUES: dict[str, frozenset[str]] = {
     "exec": frozenset({"-a"}),
     "xargs": frozenset(
@@ -54,21 +60,33 @@ _WRAPPER_LEADING_OPTIONS_WITH_VALUES: dict[str, frozenset[str]] = {
             "--arg-file",
             "-d",
             "--delimiter",
-            "-E",
             "--eof",
-            "-I",
             "--replace",
             "-J",
-            "-L",
             "--max-lines",
             "-n",
             "--max-args",
-            "-P",
             "--max-procs",
-            "-R",
-            "-S",
             "-s",
             "--max-chars",
+        }
+    ),
+}
+_WRAPPER_LEADING_FLAGS: dict[str, frozenset[str]] = {
+    "exec": frozenset({"-c", "-l"}),
+    "xargs": frozenset(
+        {
+            "-0",
+            "--null",
+            "-o",
+            "--open-tty",
+            "-t",
+            "--verbose",
+            "-x",
+            "--exit",
+            "--interactive",
+            "--no-run-if-empty",
+            "--show-limits",
         }
     ),
 }
@@ -85,20 +103,71 @@ def _wrapper_options(launcher: tuple[str, ...]) -> frozenset[str]:
     return _WRAPPER_LEADING_OPTIONS_WITH_VALUES.get(launcher[0], frozenset())
 
 
+def _wrapper_flags(launcher: tuple[str, ...]) -> frozenset[str]:
+    return _WRAPPER_LEADING_FLAGS.get(launcher[0], frozenset())
+
+
 def _launcher_matcher(
     launcher: tuple[str, ...],
     *subcommands: str,
     required_flags: frozenset[str] = frozenset(),
     options_with_values: frozenset[str] = frozenset(),
+    fail_secure: bool = True,
 ):
+    # The rules parse wrapper options fail-secure. The help safe variants do
+    # not: a looser parse there would clear more lines, not review more.
     return executable_matcher(
         *launcher,
         *subcommands,
         required_flags=required_flags,
         options_with_values=options_with_values,
+        global_flags=_wrapper_flags(launcher),
         allow_leading_options=_is_wrapper(launcher),
         leading_options_with_values=_wrapper_options(launcher),
+        fail_secure_unknown_options=fail_secure,
     )
+
+
+def _wrapped_argument_starts(
+    arguments: tuple[str, ...],
+    launcher: tuple[str, ...],
+) -> tuple[int, ...]:
+    """Return every index where the wrapped command may start after the wrapper options.
+
+    A token before the start is either an option or the possible value of the
+    option before it. Unknown and case-ambiguous options stay open both ways,
+    so an option cannot hide the wrapped command by swallowing it.
+    """
+
+    options_with_values = _wrapper_options(launcher)
+    flags = _wrapper_flags(launcher)
+    starts: list[int] = []
+    # What the previous option does to this token: nothing, maybe consume it,
+    # or certainly consume it.
+    consumed = "no"
+    for index, argument in enumerate(arguments):
+        if consumed == "yes":
+            consumed = "no"
+            continue
+        if consumed == "no" and argument == "--":
+            starts.append(index + 1)
+            break
+        if not argument.startswith("-") or argument == "-":
+            starts.append(index)
+            if consumed == "no":
+                break
+            consumed = "no"
+            continue
+        name, separator, _value = argument.partition("=")
+        if name in flags or separator:
+            consumed = "no"
+        elif name in options_with_values:
+            consumed = "yes"
+        else:
+            # Unknown, attached-value or case-ambiguous: it may or may not
+            # take the next token.
+            consumed = "maybe"
+    return tuple(starts)
 
 
 def _literal_matcher(
@@ -161,17 +230,13 @@ class VttforgeUnresolvedExpansionMatcher:
             for launcher in self.launchers:
                 if not _segment_matches_executable(segment, executable_names(launcher[0])):
                     continue
-                candidate_arguments = lowered_arguments
-                if _is_wrapper(launcher):
-                    candidate_arguments = _after_leading_options(
-                        candidate_arguments,
-                        _wrapper_options(launcher),
-                        frozenset(),
-                    )
                 prefix = launcher[1:]
-                if candidate_arguments[: len(prefix)] != prefix:
-                    continue
-                if self._matches_arguments(candidate_arguments[len(prefix) :]):
+                starts = _wrapped_argument_starts(lowered_arguments, launcher) if _is_wrapper(launcher) else (0,)
+                if any(
+                    lowered_arguments[start : start + len(prefix)] == prefix
+                    and self._matches_arguments(lowered_arguments[start + len(prefix) :])
+                    for start in starts
+                ):
                     evidence.append(
                         MatcherEvidence(
                             segment_index=index,
@@ -181,7 +246,7 @@ class VttforgeUnresolvedExpansionMatcher:
                             ),
                         )
                     )
-                break
+                    break
         return tuple(evidence)
 
 
@@ -213,11 +278,15 @@ _VTTFORGE_MIGRATE_WRITE_WITH_EXPANSIONS = AnyMatcher(
 # expanded, and never the writing flag the rule itself looks for.
 _VTTFORGE_HELP = AnyMatcher(
     matchers=tuple(
-        _launcher_matcher(launcher, required_flags=frozenset({"--help"})) for launcher in _VTTFORGE_LAUNCHERS
+        _launcher_matcher(launcher, required_flags=frozenset({"--help"}), fail_secure=False)
+        for launcher in _VTTFORGE_LAUNCHERS
     )
 )
 _VTTFORGE_SHORT_HELP = AnyMatcher(
-    matchers=tuple(_launcher_matcher(launcher, required_flags=frozenset({"-h"})) for launcher in _VTTFORGE_LAUNCHERS)
+    matchers=tuple(
+        _launcher_matcher(launcher, required_flags=frozenset({"-h"}), fail_secure=False)
+        for launcher in _VTTFORGE_LAUNCHERS
+    )
 )
 
 
