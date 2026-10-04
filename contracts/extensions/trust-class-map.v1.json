@@ -101,7 +101,8 @@
       "command.snoboard",
       "command.syngraphe",
       "command.tui-runner",
-      "command.uivoid"
+      "command.uivoid",
+      "command.vttforge"
     ]
   }
 }
